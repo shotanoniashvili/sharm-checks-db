@@ -1,0 +1,32 @@
+@import 'variables';
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-vue/src/index';
+@import '~sweetalert2/src/sweetalert2';
+
+@import 'elements/card';
+@import 'elements/navbar';
+@import 'elements/buttons';
+@import 'elements/transitions';
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+tr.head td {
+  padding: 23px !important;
+}
+
+td.rotate {
+  height:80px;
+  white-space: nowrap;
+  position:relative;
+}
+
+td.rotate > div {
+  transform: rotate(90deg);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 24px;
+  margin: auto;
+}
