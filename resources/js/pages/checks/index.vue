@@ -15,7 +15,15 @@
         <div class="accordion" role="tablist">
           <b-card no-body class="mb-1">
             <b-card-header header-tag="header" class="p-3 cursor-pointer" role="tab" @click="toggleAccordion(check)">
-              {{ check.name }} - {{ moment(check.created_at).format('YYYY-MM-DD HH:mm:ss') }} - {{ check.user.name }}
+              <div class="float-left">
+                {{ check.name }} - {{ moment(check.created_at).format('YYYY-MM-DD HH:mm:ss') }} - {{ check.user.name }}
+                <b-icon
+                  v-for="item of check.items"
+                  :key="item.id"
+                  icon="circle-fill"
+                  :class="[ 'ml-3', { 'text-success': item.is_finished }, { 'text-warning': !item.is_finished } ]"
+                />
+              </div>
 
               <div class="check-actions float-right">
                 <b-icon icon="circle-fill"
@@ -117,6 +125,11 @@
                       </td>
                       <td v-for="manager of check.user.managers">
                         <b-icon :class="getApproveModalIcon(item, manager).class + ' cursor-pointer'" :icon="getApproveModalIcon(item, manager).icon" @click="openApproveModal(check, item, manager)" />
+                        <span v-b-tooltip.hover :title="getItemComment(item, manager).comment" v-if="getItemComment(item, manager) && getItemComment(item, manager).comment !== null">
+                          <b-badge pill variant="info" class="position-absolute">
+                            {{ getItemComment(item, manager).comment.length }}
+                          </b-badge>
+                        </span>
                       </td>
                       <td>
                         <b-icon icon="trash" class="cursor-pointer text-danger" @click="removeCheckItem(check, item)" />
@@ -207,6 +220,12 @@ export default {
   },
 
   methods: {
+    getItemComment (item, manager) {
+      if (item.statuses.filter(o => o.user_id == manager.id).length === 0) return null
+
+      return item.statuses.filter(o => o.user_id == manager.id)[0]
+    },
+
     toggleCheckActivation (check) {
       axios.get('/api/checks/' + check.id + '/toggle-status')
         .then(() => {

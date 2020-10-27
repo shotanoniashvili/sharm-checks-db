@@ -55,9 +55,9 @@
             :options="roles"
           />
         </b-form-group>
-        <b-form-group v-if="tmpItem && tmpItem.roles && tmpItem.roles.indexOf(3) !== -1"
-          label="მომხმარებლის როლი"
-          label-for="roles-input"
+        <b-form-group v-if="tmpItem && tmpItem.roles && (tmpItem.roles.indexOf(3) !== -1 || tmpItem.roles.map(o => o.id).indexOf(3) !== -1)"
+                      label="მენეჯერები"
+                      label-for="managers-input"
         >
           <v-select
             v-model="tmpItem.managers"
@@ -157,8 +157,19 @@ export default {
       }
     },
 
+    getParams () {
+      let data = Object.assign({}, this.tmpItem)
+
+      data.roles = !Number.isInteger(data.roles[0]) ? data.roles.map(o => o.id) : data.roles
+
+      if (data.organization) data.organization_id = data.organization.id
+      if (data.managers) { data.managers = !Number.isInteger(data.managers[0]) ? data.managers.map(o => o.id) : data.managers }
+
+      return data
+    },
+
     update () {
-      axios.patch('/api/users/' + this.tmpItem.id, this.tmpItem)
+      axios.patch('/api/users/' + this.tmpItem.id, this.getParams())
         .then(response => {
           this.$emit('user-updated', response.data.data)
 
@@ -167,7 +178,7 @@ export default {
     },
 
     create () {
-      axios.post('/api/users', this.tmpItem)
+      axios.post('/api/users', this.getParams())
         .then(response => {
           this.$emit('user-created', response.data.data)
 

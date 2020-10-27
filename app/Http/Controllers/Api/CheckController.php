@@ -91,6 +91,12 @@ class CheckController extends Controller
         return new MessageResource('', true);
     }
 
+    /*public function copyFromArchive(Check $check) {
+        $check->update(['is_archive' => !$check->is_archive]);
+
+        return new MessageResource('', true);
+    }*/
+
     public function store(Request $request) {
         $data = [
             'name' => $request->name,

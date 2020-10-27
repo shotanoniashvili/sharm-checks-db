@@ -12,6 +12,9 @@
       :items="users"
       :fields="fields"
     >
+      <template #cell(organization)="data">
+        {{ data.value.name }}
+      </template>
       <template #cell(roles)="data">
         {{ data.value.map((i) => i.name).join(', ') }}
       </template>
