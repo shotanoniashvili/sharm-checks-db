@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 class UserController extends Controller
 {
     public function index() {
-        return new MessageResource('', true, User::with(['roles', 'organization', 'managers'])->get());
+        return new MessageResource('', true, User::with(['roles', 'organizations', 'managers'])->get());
     }
 
     public function store(UserRequest $request) {
@@ -29,9 +29,9 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            $user->managers()->sync($request->managers);
+            $user->organizations()->sync($request->organizations);
 
-            if($request->organization && is_int($request->organization)) $user->organization_id = $request->organization;
+            $user->managers()->sync($request->managers);
 
             $user->save();
 
@@ -50,9 +50,9 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
-            $user->managers()->sync($request->managers);
+            $user->organizations()->sync($request->organizations);
 
-            if($request->organization && is_int($request->organization)) $user->organization_id = $request->organization;
+            $user->managers()->sync($request->managers);
 
             if($request->password) $user->password = Hash::make($request->password);
 

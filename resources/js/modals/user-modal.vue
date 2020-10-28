@@ -37,8 +37,9 @@
           label-for="organization-input"
         >
           <v-select
-            v-model="tmpItem.organization"
+            v-model="tmpItem.organizations"
             :reduce="organization => organization.id"
+            multiple
             :options="organizations"
             label="name"
           />
@@ -124,7 +125,6 @@ export default {
         id: null,
         name: '',
         email: '',
-        organization_id: '',
         password: ''
       }
     },
@@ -161,8 +161,8 @@ export default {
       let data = Object.assign({}, this.tmpItem)
 
       data.roles = !Number.isInteger(data.roles[0]) ? data.roles.map(o => o.id) : data.roles
+      data.organizations = !Number.isInteger(data.organizations[0]) ? data.organizations.map(o => o.id) : data.organizations
 
-      if (data.organization) data.organization_id = data.organization.id
       if (data.managers) { data.managers = !Number.isInteger(data.managers[0]) ? data.managers.map(o => o.id) : data.managers }
 
       return data

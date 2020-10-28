@@ -32,11 +32,11 @@ class CheckController extends Controller
 
         if($user->hasRole('manager')) $query->where('is_visible', true);
 
-        if(!$user->hasRole('admin')) {
-            $query->whereHas('user', function($q) use ($user) {
-                $q->where('organization_id', $user->organization_id);
+        $query->whereHas('user', function($q) use ($user) {
+            $q->whereHas('organizations', function($q2) use ($user) {
+                $q2->whereIn('id', $user->organizations->pluck('id')->toArray());
             });
-        }
+        });
 
         $checks = $query->get();
 
@@ -55,11 +55,11 @@ class CheckController extends Controller
             $items->with(['statuses', 'finishedBy']);
         }])->where('is_archive', true);
 
-        if(!$user->hasRole('admin')) {
-            $query->whereHas('user', function($q) use ($user) {
-                $q->where('organization_id', $user->organization_id);
+        $query->whereHas('user', function($q) use ($user) {
+            $q->whereHas('organizations', function($q2) use ($user) {
+                $q2->whereIn('id', $user->organizations->pluck('id')->toArray());
             });
-        }
+        });
 
         if($request->input('date-from')) $query->where('created_at', '>=', $request->input('date-from'));
         if($request->input('date-to')) $query->where('created_at', '<=', $request->input('date-to'));
@@ -152,6 +152,8 @@ class CheckController extends Controller
     }
 
     public function updateItem(Request $request, Check $check, CheckItem $item) {
+        if($item->statuses()->count() !== 0 && !$request->user()->hasRole('admin')) abort(403);
+
         $item->update($request->toArray());
 
         if ($request->hasFile('file')) {
@@ -165,6 +167,8 @@ class CheckController extends Controller
     }
 
     public function deleteItem(Request $request, Check $check, CheckItem $item) {
+        if($item->statuses()->count() !== 0 && !$request->user()->hasRole('admin')) abort(403);
+
         $item->delete();
 
         return new MessageResource('', true);
@@ -175,6 +179,8 @@ class CheckController extends Controller
     }
 
     public function approveItem(Request $request, Check $check, CheckItem $item, User $manager) {
+        if($manager->id !== $request->user()->id && !$request->user()->hasRole('admin')) abort(403);
+
         $itemStatus = CheckItemStatus::firstOrNew([
             'check_item_id' => $item->id,
             'user_id'       => $manager->id
@@ -188,6 +194,8 @@ class CheckController extends Controller
     }
 
     public function rejectItem(Request $request, Check $check, CheckItem $item, User $manager) {
+        if($manager->id !== $request->user()->id && !$request->user()->hasRole('admin')) abort(403);
+
         $itemStatus = CheckItemStatus::firstOrNew([
             'check_item_id' => $item->id,
             'user_id'       => $manager->id

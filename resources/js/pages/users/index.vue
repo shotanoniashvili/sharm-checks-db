@@ -12,8 +12,8 @@
       :items="users"
       :fields="fields"
     >
-      <template #cell(organization)="data">
-        {{ data.value.name }}
+      <template #cell(organizations)="data">
+        {{ data.value.map(o => o.name).join(', ') }}
       </template>
       <template #cell(roles)="data">
         {{ data.value.map((i) => i.name).join(', ') }}
@@ -57,7 +57,7 @@ export default {
           label: 'ელ-ფოსტა'
         },
         {
-          key: 'organization',
+          key: 'organizations',
           label: 'ორგანიზაცია'
         },
         {

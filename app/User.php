@@ -19,7 +19,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'organization_id',
+        'name', 'email', 'password'
     ];
 
     /**
@@ -114,8 +114,8 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         return $this->belongsToMany(User::class, 'user_managers', 'manager_id', 'user_id');
     }
 
-    public function organization() {
-        return $this->belongsTo(Organization::class);
+    public function organizations() {
+        return $this->belongsToMany(Organization::class, 'user_organizations');
     }
 
     public function roles() {

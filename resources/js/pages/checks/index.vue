@@ -37,7 +37,7 @@
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
               <b-card-body>
                 <table class="cheki" style="width: 100%">
-                  <b-button variant="success" @click="downloadCheck(check)" class="mb-2">
+                  <b-button variant="success" class="mb-2" @click="downloadCheck(check)">
                     ექსპორტი
                   </b-button>
                   <tbody>
@@ -188,6 +188,8 @@ import { mapGetters } from 'vuex'
 import axios from 'axios'
 import { saveAs } from 'file-saver'
 
+// v. sadzaglishvili ID: 3
+
 export default {
   middleware: 'auth',
   components: { CheckModal, ItemApproveModal },
@@ -245,7 +247,9 @@ export default {
     },
 
     canFinish (check, item) {
-      if (this.isAdmin) return true
+      const acceptedByFounder = item.statuses.filter(o => o.user_id === 3)
+
+      if (this.isAdmin || (acceptedByFounder.length > 0 && acceptedByFounder.is_accepted)) return true
 
       return check.user.managers.length === item.statuses.length
     },

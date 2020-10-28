@@ -24,7 +24,7 @@
 
       <template #modal-footer>
         <div class="w-100">
-          <div class="float-left" v-if="isManager">
+          <div class="float-left" v-if="isManager && user.id === manager.id">
             <b-button
               variant="success"
               @click="approve()"
@@ -69,7 +69,8 @@ export default {
 
   computed: {
     ...mapGetters({
-      isManager: 'auth/isManager'
+      isManager: 'auth/isManager',
+        user: 'auth/user'
     })
   },
 
