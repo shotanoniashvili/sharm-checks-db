@@ -6,6 +6,8 @@ use App\Check;
 use App\CheckItem;
 use App\CheckItemStatus;
 use App\Exceptions\VerifyEmailException;
+use App\Exports\CheckExport;
+use App\Exports\ChecksExport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
 use App\Organization;
@@ -15,6 +17,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CheckController extends Controller
 {
@@ -85,17 +88,38 @@ class CheckController extends Controller
         return new MessageResource('', true);
     }
 
-    public function toggleArchive(Check $check) {
-        $check->update(['is_archive' => !$check->is_archive]);
+    public function copyFromArchive(Request $request, Check $check) {
+        $clonedCheck = Check::create([
+            'name' => $check->name,
+            'user_id' => $request->user()->id,
+            'status' => 'in_progress'
+        ]);
+
+        foreach ($check->items as $item) {
+            $clonedCheck->items()->save(new CheckItem([
+                'op_name'   => $item->op_name,
+                'gel'       => $item->gel,
+                'eur'       => $item->eur,
+                'rur'       => $item->rur,
+                'usd'       => $item->usd,
+                'source'    => $item->source,
+                'destination'    => $item->destination,
+                'brand'     => $item->brand,
+                'doc_type'  => $item->doc_type,
+                'comment'   => $item->comment,
+                'finished_by'    => null,
+                'file'      => null,
+            ]));
+        }
 
         return new MessageResource('', true);
     }
 
-    /*public function copyFromArchive(Check $check) {
-        $check->update(['is_archive' => !$check->is_archive]);
+    public function moveToArchive(Check $check) {
+        $check->update(['is_archive' => true]);
 
         return new MessageResource('', true);
-    }*/
+    }
 
     public function store(Request $request) {
         $data = [
@@ -115,13 +139,27 @@ class CheckController extends Controller
     }
 
     public function storeItem(Request $request, Check $check) {
-        $check->items()->save(new CheckItem($request->toArray()));
+        $checkItem = new CheckItem($request->toArray());
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('/uploads');
+            $checkItem->file = $path;
+        }
+
+        $check->items()->save($checkItem);
 
         return new MessageResource('', true);
     }
 
     public function updateItem(Request $request, Check $check, CheckItem $item) {
         $item->update($request->toArray());
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('/uploads');
+            $item->file = $path;
+        }
+
+        $item->save();
 
         return new MessageResource('', true);
     }
@@ -167,5 +205,15 @@ class CheckController extends Controller
         $item->save();
 
         return new MessageResource('', true);
+    }
+
+    public function exportCheck(Check $check) {
+        return Excel::download(new CheckExport($check), 'check-export.xlsx');
+    }
+
+    public function exportChecks(Request $request) {
+        $checks = Check::where('is_archive', true)->get();
+
+        return Excel::download(new ChecksExport($checks), 'checks-export.xlsx');
     }
 }

@@ -29,6 +29,8 @@ class UserController extends Controller
 
             $user->roles()->sync($request->roles);
 
+            $user->managers()->sync($request->managers);
+
             if($request->organization && is_int($request->organization)) $user->organization_id = $request->organization;
 
             $user->save();

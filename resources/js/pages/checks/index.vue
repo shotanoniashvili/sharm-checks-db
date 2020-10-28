@@ -36,12 +36,10 @@
             </b-card-header>
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
               <b-card-body>
-                <table class="cheki" style="width: 100%" tableexport-key="tableexport-3">
-                  <caption class="btn-toolbar tableexport-caption" style="caption-side: bottom;">
-                    <button type="button" tableexport-id="5289c334-xlsx" class="btn btn-default xlsx">
-                      Export to xlsx
-                    </button>
-                  </caption>
+                <table class="cheki" style="width: 100%">
+                  <b-button variant="success" @click="downloadCheck(check)" class="mb-2">
+                    ექსპორტი
+                  </b-button>
                   <tbody>
                     <tr class="head">
                       <td rowspan="2">
@@ -117,28 +115,29 @@
                       <td>{{ item.comment }}</td>
                       <td>
                         <b-icon v-if="canEdit(check, item)" class="cursor-pointer text-info" icon="pencil" @click="editCheckItem(check, item)" />
-
-                        <span v-if="item.is_finished" v-b-tooltip.hover :title="item.finished_by ? item.finished_by.name : ''">
-                          <b-icon class="cursor-pointer text-success" icon="check-circle-fill" />
-                        </span>
-                        <b-icon v-if="!item.is_finished" class="cursor-pointer text-success" icon="check-circle" @click="finishCheckItem(check, item)" />
+                        <div v-else-if="canFinish">
+                          <span v-if="item.is_finished" v-b-tooltip.hover :title="item.finished_by ? item.finished_by.name : ''">
+                            <b-icon class="cursor-pointer text-success" icon="check-circle-fill" />
+                          </span>
+                          <b-icon v-if="!item.is_finished" class="cursor-pointer text-success" icon="check-circle" @click="finishCheckItem(check, item)" />
+                        </div>
                       </td>
                       <td v-for="manager of check.user.managers">
                         <b-icon :class="getApproveModalIcon(item, manager).class + ' cursor-pointer'" :icon="getApproveModalIcon(item, manager).icon" @click="openApproveModal(check, item, manager)" />
-                        <span v-b-tooltip.hover :title="getItemComment(item, manager).comment" v-if="getItemComment(item, manager) && getItemComment(item, manager).comment !== null">
+                        <span v-if="getItemComment(item, manager) && getItemComment(item, manager).comment !== null">
                           <b-badge pill variant="info" class="position-absolute">
                             {{ getItemComment(item, manager).comment.length }}
                           </b-badge>
                         </span>
                       </td>
                       <td>
-                        <b-icon icon="trash" class="cursor-pointer text-danger" @click="removeCheckItem(check, item)" />
+                        <b-icon v-if="canEdit(check, item)" icon="trash" class="cursor-pointer text-danger" @click="removeCheckItem(check, item)" />
                       </td>
                     </tr>
                     <tr class="edit_tr_130">
                       <td>&nbsp;</td>
                       <td><input v-model="newItem.op_name" class="form-control"></td>
-                      <td><input v-model="newItem.op_number" class="form-control"></td>
+                      <td><input class="form-control" type="file" @change="onChangeFile($event.target.files)"></td>
                       <td><input v-model="newItem.gel" class="form-control"></td>
                       <td><input v-model="newItem.eur" class="form-control"></td>
                       <td><input v-model="newItem.rur" class="form-control"></td>
@@ -187,6 +186,7 @@ import ItemApproveModal from '../../modals/item-approve-modal'
 import store from '../../store'
 import { mapGetters } from 'vuex'
 import axios from 'axios'
+import { saveAs } from 'file-saver'
 
 export default {
   middleware: 'auth',
@@ -211,6 +211,7 @@ export default {
     ...mapGetters({
       checks: 'check/activeChecks',
       isManager: 'auth/isManager',
+      isAdmin: 'auth/isAdmin',
       isOperator: 'auth/isOperator'
     })
   },
@@ -220,6 +221,16 @@ export default {
   },
 
   methods: {
+    downloadCheck (check) {
+      saveAs('/api/checks/' + check.id + '/export')
+    },
+
+    onChangeFile (files) {
+      if (files.length === 0) return
+
+      this.newItem.attachment = files[0]
+    },
+
     getItemComment (item, manager) {
       if (item.statuses.filter(o => o.user_id == manager.id).length === 0) return null
 
@@ -234,6 +245,8 @@ export default {
     },
 
     canFinish (check, item) {
+      if (this.isAdmin) return true
+
       return check.user.managers.length === item.statuses.length
     },
 
@@ -247,7 +260,9 @@ export default {
     },
 
     canEdit (check, item) {
-      return check.user.managers.length > item.statuses.length
+      if (this.isAdmin) return true
+
+      return item.statuses.length === 0
     },
 
     onApproveModalHide () {
@@ -267,14 +282,20 @@ export default {
     },
 
     addCheckItem (check) {
+      const formData = new FormData()
+
+      for (let key in this.newItem) {
+        if (this.newItem[key]) formData.append(key, this.newItem[key])
+      }
+
       if (!this.newItem.id) {
-        axios.post('/api/checks/' + check.id + '/items', this.newItem)
+        axios.post('/api/checks/' + check.id + '/items', formData)
           .then(response => {
             this.newItem = this.getEmptyNewItem()
             this.loadCheckItems(check)
           })
       } else {
-        axios.patch('/api/checks/' + check.id + '/items/' + this.newItem.id, this.newItem)
+        axios.patch('/api/checks/' + check.id + '/items/' + this.newItem.id, formData)
           .then(response => {
             this.newItem = this.getEmptyNewItem()
             this.loadCheckItems(check)
@@ -287,8 +308,6 @@ export default {
     },
 
     openApproveModal (check, item, manager) {
-      if (!this.isManager) return
-
       this.checkToApprove = check
       this.itemToApprove = item
       this.managerToApprove = manager
@@ -306,7 +325,7 @@ export default {
     getEmptyNewItem () {
       return {
         op_name: '',
-        op_number: '',
+        file: '',
         gel: '',
         eur: '',
         rur: '',
@@ -339,7 +358,7 @@ export default {
     },
 
     moveToArchive (check) {
-      axios.get('/api/checks/' + check.id + '/toggle-archive')
+      axios.get('/api/checks/' + check.id + '/move-to-archive')
         .then(() => {
           this.loadChecks()
         })

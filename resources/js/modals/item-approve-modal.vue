@@ -24,7 +24,7 @@
 
       <template #modal-footer>
         <div class="w-100">
-          <div class="float-left">
+          <div class="float-left" v-if="isManager">
             <b-button
               variant="success"
               @click="approve()"
@@ -53,15 +53,11 @@
 
 <script>
 import axios from 'axios'
-import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'ItemApproveModal',
-
-  components: {
-    vSelect
-  },
 
   props: ['check', 'item', 'manager'],
 
@@ -72,7 +68,9 @@ export default {
   },
 
   computed: {
-
+    ...mapGetters({
+      isManager: 'auth/isManager'
+    })
   },
 
   methods: {
@@ -90,7 +88,7 @@ export default {
         comment: this.comment
       })
         .then(response => {
-            this.$bvModal.hide('item-approve-modal')
+          this.$bvModal.hide('item-approve-modal')
         })
     },
 

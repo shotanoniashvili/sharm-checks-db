@@ -19,6 +19,7 @@
     "axios": "^0.18.1",
     "bootstrap": "^4.3.1",
     "bootstrap-vue": "^2.18.0",
+    "file-saver": "^2.0.2",
     "jquery": "^3.4.1",
     "js-cookie": "^2.2.0",
     "moment": "^2.29.1",

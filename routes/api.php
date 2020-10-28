@@ -31,8 +31,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/active-checks', 'Api\CheckController@index');
     Route::get('/archive-checks', 'Api\CheckController@indexArchive');
+    Route::get('/checks/export', 'Api\CheckController@exportChecks');
+    Route::get('/checks/{check}/export', 'Api\CheckController@exportCheck');
     Route::get('/checks/{check}/toggle-status', 'Api\CheckController@toggleStatus');
-    Route::get('/checks/{check}/toggle-archive', 'Api\CheckController@toggleArchive');
+    Route::get('/checks/{check}/move-to-archive', 'Api\CheckController@moveToArchive');
+    Route::get('/checks/{check}/copy-from-archive', 'Api\CheckController@copyFromArchive');
     Route::get('/checks/{check}/items', 'Api\CheckController@items');
     Route::get('/checks/{check}/items/{item}/finish', 'Api\CheckController@finish');
     Route::get('/checks/{check}/items/{item}/{manager}', 'Api\CheckController@getItemStatus');

@@ -6,7 +6,7 @@
       :title="modalTitle"
       :ok-title="modalTitle"
       cancel-title="დახურვა"
-      @show="showModal"
+      @shown="showModal"
       @hidden="hideModal"
       @ok="handleOk"
     >
@@ -102,6 +102,7 @@ export default {
 
   data () {
     return {
+      tmpItem: {}
     }
   },
 
@@ -114,10 +115,6 @@ export default {
 
     modalTitle: function () {
       return this.tmpItem.id ? 'რედაქტირება' : 'დამატება'
-    },
-
-    tmpItem: function () {
-      return this.item ? this.item : this.getEmptyItem()
     }
   },
 
@@ -136,6 +133,9 @@ export default {
       store.dispatch('organization/getAll')
       store.dispatch('role/getAll')
       store.dispatch('user/getAll')
+
+      if (this.item) { this.tmpItem = Object.assign({}, this.item) }
+
       this.$emit('show-modal')
     },
 

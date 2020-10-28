@@ -9,7 +9,6 @@ class CheckItem extends Model
     protected $fillable = [
         'check_id',
         'op_name',
-        'op_number',
         'gel',
         'eur',
         'rur',

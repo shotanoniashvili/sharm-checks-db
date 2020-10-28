@@ -4,9 +4,6 @@
       <div class="col-12 col-lg-6">
         <div class="card-title">
           ჩეკების არქივი
-          <!--<b-button v-b-modal.check-modal class="float-right">
-            <b-icon icon="plus-circle" aria-hidden="true" />
-          </b-button>-->
         </div>
       </div>
       <div class="col-12 col-lg-6">
@@ -15,13 +12,15 @@
             <b-form-datepicker
               v-model="searchParams.dateFrom"
               :date-format-options="{ year: 'numeric', month: 'numeric', day: 'numeric' }"
-              class="mb-2" placeholder="თარიღი (-დან)"></b-form-datepicker>
+              class="mb-2" placeholder="თარიღი (-დან)"
+            />
           </div>
           <div class="col-3">
             <b-form-datepicker
               v-model="searchParams.dateTo"
               :date-format-options="{ year: 'numeric', month: 'numeric', day: 'numeric' }"
-              class="mb-2" placeholder="თარიღი (-მდე)"></b-form-datepicker>
+              class="mb-2" placeholder="თარიღი (-მდე)"
+            />
           </div>
           <div class="col-3">
             <v-select
@@ -40,6 +39,11 @@
           </div>
         </div>
       </div>
+      <div class="col-12">
+        <b-button variant="success" class="mb-2" @click="downloadChecks()">
+          ექსპორტი
+        </b-button>
+      </div>
     </div>
     <div class="row mt-5">
       <div v-for="(check, i) of checks" :key="i" class="col-12">
@@ -53,7 +57,7 @@
                         :class="[ 'mr-3', { 'text-success': check.is_visible }, { 'text-danger': !check.is_visible } ]" :title="check.is_visible ? 'დეაქტივაცია' : 'აქტივაცია'"
                 />
                 <b-icon icon="pencil-square" class="mr-3 text-info" />
-                <b-icon icon="archive" class="text-warning" @click="removeFromArchive(check)" />
+                <b-icon icon="archive" class="text-warning" @click="copyFromArchive(check)" />
               </div>
             </b-card-header>
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
@@ -203,6 +207,7 @@ import { mapGetters } from 'vuex'
 import axios from 'axios'
 import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
+import { saveAs } from 'file-saver'
 
 export default {
   middleware: 'auth',
@@ -252,6 +257,10 @@ export default {
   },
 
   methods: {
+    downloadChecks () {
+      saveAs('/api/checks/export')
+    },
+
     getApproveModalIcon (item, manager) {
       let status = item.statuses.filter(o => o.user_id == manager.id)
 
@@ -295,10 +304,10 @@ export default {
         })
     },
 
-    removeFromArchive (check) {
-      axios.get('/api/checks/' + check.id + '/toggle-archive')
+    copyFromArchive (check) {
+      axios.get('/api/checks/' + check.id + '/copy-from-archive')
         .then(() => {
-          this.loadChecks()
+          this.$router.push({ name: 'checks' })
         })
     },
 

@@ -11,6 +11,7 @@ export const state = {
 // getters
 export const getters = {
   user: state => state.user,
+  isAdmin: state => state.user.roles.filter(o => o.slug === 'admin').length > 0,
   isManager: state => state.user.roles.filter(o => o.slug === 'manager').length > 0,
   isOperator: state => state.user.roles.filter(o => o.slug === 'operator').length > 0,
   token: state => state.token,
