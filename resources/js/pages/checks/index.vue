@@ -23,6 +23,8 @@
                   icon="circle-fill"
                   :class="[ 'ml-3', { 'text-success': item.is_finished }, { 'text-warning': !item.is_finished } ]"
                 />
+                <b-icon icon="cash-stack" :class="['ml-3', { 'text-success': check.is_paid }, { 'text-danger': !check.is_paid }]" />
+                <b-icon icon="check2-all" :class="['ml-3', { 'text-success': check.is_finished }, { 'text-danger': !check.is_finished }]" />
               </div>
 
               <div class="check-actions float-right">
@@ -31,7 +33,8 @@
                         @click="toggleCheckActivation(check)"
                 />
                 <b-icon icon="pencil-square" class="mr-3 text-info" @click="editCheck(check)" />
-                <b-icon icon="archive" class="text-warning" @click="moveToArchive(check)" />
+                <b-icon v-if="canArchive(check)" icon="archive" class="mr-3 text-warning" @click="moveToArchive(check)" />
+                <b-icon v-if="canDelete(check)" icon="trash" class="text-danger" @click="deleteCheck(check)" />
               </div>
             </b-card-header>
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
@@ -42,9 +45,9 @@
                   </b-button>
                   <tbody>
                     <tr class="head">
-                      <td rowspan="2">
-                        #
-                      </td>
+                      <!--                      <td rowspan="2">-->
+                      <!--                        #-->
+                      <!--                      </td>-->
                       <td style="text-align: center;     height: 100px;">
                         ოპერაციის ანგარიშის
                       </td>
@@ -101,9 +104,9 @@
                       </td>
                     </tr>
                     <tr v-for="(item, j) of check.items" :key="j">
-                      <td>{{ j }}</td>
+                      <!--                      <td>{{ j }}</td>-->
                       <td>{{ item.op_name }}</td>
-                      <td>{{ item.op_number }}</td>
+                      <td><a v-if="item.file" :href="item.file"><b-icon icon="download" /></a></td>
                       <td>{{ item.gel }}</td>
                       <td>{{ item.eur }}</td>
                       <td>{{ item.rur }}</td>
@@ -135,9 +138,14 @@
                       </td>
                     </tr>
                     <tr class="edit_tr_130">
-                      <td>&nbsp;</td>
+                      <!--                      <td>&nbsp;</td>-->
                       <td><input v-model="newItem.op_name" class="form-control"></td>
-                      <td><input class="form-control" type="file" @change="onChangeFile($event.target.files)"></td>
+                      <td>
+                        <input id="file-input" type="file" class="d-none" @input="onFileInput($event.target.files)">
+                        <b-button variant="info" @click="openFileWindow">
+                          ფაილი
+                        </b-button>
+                      </td>
                       <td><input v-model="newItem.gel" class="form-control"></td>
                       <td><input v-model="newItem.eur" class="form-control"></td>
                       <td><input v-model="newItem.rur" class="form-control"></td>
@@ -205,13 +213,15 @@ export default {
       newItem: this.getEmptyNewItem(),
       itemToApprove: null,
       checkToApprove: null,
-      managerToApprove: null
+      managerToApprove: null,
+      form: new FormData()
     }
   },
 
   computed: {
     ...mapGetters({
       checks: 'check/activeChecks',
+      user: 'auth/user',
       isManager: 'auth/isManager',
       isAdmin: 'auth/isAdmin',
       isOperator: 'auth/isOperator'
@@ -223,14 +233,19 @@ export default {
   },
 
   methods: {
-    downloadCheck (check) {
-      saveAs('/api/checks/' + check.id + '/export')
+    onFileInput (fileList) {
+      if (!fileList.length) return
+
+      this.form.delete('file')
+      this.form.append('file', fileList[0])
     },
 
-    onChangeFile (files) {
-      if (files.length === 0) return
+    openFileWindow () {
+      document.getElementById('file-input').click()
+    },
 
-      this.newItem.attachment = files[0]
+    downloadCheck (check) {
+      saveAs('/api/checks/' + check.id + '/export')
     },
 
     getItemComment (item, manager) {
@@ -266,7 +281,24 @@ export default {
     canEdit (check, item) {
       if (this.isAdmin) return true
 
-      return item.statuses.length === 0
+      return item.statuses.length === 0 && check.user_id === this.user.id
+    },
+
+    canDelete (check) {
+      return this.isAdmin === true
+    },
+
+    deleteCheck (check) {
+      axios.delete('/api/checks/' + check.id)
+        .then(response => {
+          this.loadChecks()
+        })
+    },
+
+    canArchive (check) {
+      if (this.isAdmin) return true
+
+      return check.is_finished && check.user_id === this.user.id
     },
 
     onApproveModalHide () {
@@ -286,23 +318,31 @@ export default {
     },
 
     addCheckItem (check) {
-      const formData = new FormData()
-
       for (let key in this.newItem) {
-        if (this.newItem[key]) formData.append(key, this.newItem[key])
+        if (this.newItem[key]) this.form.append(key, this.newItem[key])
       }
 
       if (!this.newItem.id) {
-        axios.post('/api/checks/' + check.id + '/items', formData)
+        axios.post('/api/checks/' + check.id + '/items', this.form, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
           .then(response => {
             this.newItem = this.getEmptyNewItem()
             this.loadCheckItems(check)
+            this.form = new FormData()
           })
       } else {
-        axios.patch('/api/checks/' + check.id + '/items/' + this.newItem.id, formData)
+        axios.post('/api/checks/' + check.id + '/items/' + this.newItem.id, this.form, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
           .then(response => {
             this.newItem = this.getEmptyNewItem()
             this.loadCheckItems(check)
+            this.form = new FormData()
           })
       }
     },

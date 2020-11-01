@@ -18,7 +18,7 @@ class CreateChecksTable extends Migration
             $table->string('name');
             $table->unsignedBigInteger('user_id')->nullable();
             $table->enum('status', [
-                'in_progress', 'completed'
+                'in_progress', 'completed', 'waiting_payment', 'rejected'
             ])->default('in_progress');
             $table->boolean('is_archive')->default(false);
             $table->boolean('is_visible')->default(false);

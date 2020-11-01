@@ -24,7 +24,7 @@
 
       <template #modal-footer>
         <div class="w-100">
-          <div class="float-left" v-if="isManager && user.id === manager.id">
+          <div v-if="(isManager && user.id === manager.id && isAccepted === null) || isAdmin" class="float-left">
             <b-button
               variant="success"
               @click="approve()"
@@ -63,14 +63,16 @@ export default {
 
   data () {
     return {
-      comment: ''
+      comment: '',
+      isAccepted: null
     }
   },
 
   computed: {
     ...mapGetters({
       isManager: 'auth/isManager',
-        user: 'auth/user'
+      user: 'auth/user',
+      isAdmin: 'auth/isAdmin'
     })
   },
 
@@ -101,13 +103,17 @@ export default {
 
     hideModal () {
       this.comment = ''
+      this.isAccepted = null
       this.$emit('hide-modal')
     },
 
     loadStatus () {
       axios.get('/api/checks/' + this.check.id + '/items/' + this.item.id + '/' + this.manager.id)
         .then(response => {
-          if (response.data.data) this.comment = response.data.data.comment
+          if (response.data.data) {
+            this.comment = response.data.data.comment
+            this.isAccepted = response.data.data.is_accepted
+          }
         })
     }
 

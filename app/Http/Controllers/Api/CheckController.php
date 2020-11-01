@@ -21,6 +21,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class CheckController extends Controller
 {
+    private $sadzaglishvilisID = 3;
+
     public function index(Request $request) {
         $user = $request->user();
 
@@ -142,8 +144,10 @@ class CheckController extends Controller
         $checkItem = new CheckItem($request->toArray());
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('/uploads');
-            $checkItem->file = $path;
+            $name = (new \DateTime())->format('Y-m-d H-i-s').'.'.$request->file('file')->getClientOriginalExtension();
+            $link = '/storage/uploads/'.$name;
+            $path = $request->file('file')->storeAs('/public/uploads', $name);
+            $checkItem->file = $link;
         }
 
         $check->items()->save($checkItem);
@@ -157,8 +161,10 @@ class CheckController extends Controller
         $item->update($request->toArray());
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('/uploads');
-            $item->file = $path;
+            $name = (new \DateTime())->format('Y-m-d H-i-s').'.'.$request->file('file')->getClientOriginalExtension();
+            $link = '/storage/uploads/'.$name;
+            $path = $request->file('file')->storeAs('/public/uploads', $name);
+            $item->file = $link;
         }
 
         $item->save();
@@ -190,6 +196,10 @@ class CheckController extends Controller
         $itemStatus->comment = $request->comment;
         $itemStatus->save();
 
+        $managerCheck = $manager->id === $this->sadzaglishvilisID;
+        if($check->user->managers->count() === CheckItemStatus::whereIn('check_item_id', $check->items->pluck('id')->toArray())->count() || $managerCheck)
+            $check->update(['status' => 'waiting_payment']);
+
         return new MessageResource('', true);
     }
 
@@ -205,12 +215,19 @@ class CheckController extends Controller
         $itemStatus->comment = $request->comment;
         $itemStatus->save();
 
+        $managerCheck = $manager->id === $this->sadzaglishvilisID;
+        if($check->user->managers->count() === CheckItemStatus::whereIn('check_item_id', $check->items->pluck('id')->toArray())->count() || $managerCheck)
+            $check->update(['status' => 'rejected']);
+
         return new MessageResource('', true);
     }
 
     public function finish(Request $request, Check $check, CheckItem $item) {
         $item->finished_by = $request->user()->id;
         $item->save();
+
+        if($check->user->managers->count() === CheckItemStatus::whereIn('check_item_id', $check->items->pluck('id')->toArray())->count())
+            $check->update(['status' => 'completed']);
 
         return new MessageResource('', true);
     }
@@ -223,5 +240,11 @@ class CheckController extends Controller
         $checks = Check::where('is_archive', true)->get();
 
         return Excel::download(new ChecksExport($checks), 'checks-export.xlsx');
+    }
+
+    public function destroy(Check $check) {
+        $check->delete();
+
+        return new MessageResource('', true);
     }
 }

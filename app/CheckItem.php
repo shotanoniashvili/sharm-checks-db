@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class CheckItem extends Model
 {
+    private $sadzaglishvilisID = 3;
+
     protected $fillable = [
         'check_id',
         'op_name',
@@ -20,7 +22,7 @@ class CheckItem extends Model
         'comment'
     ];
 
-    protected $appends = ['is_finished'];
+    protected $appends = ['is_finished', 'can_finish'];
 
     public function statuses() {
         return $this->hasMany(CheckItemStatus::class);
@@ -32,5 +34,10 @@ class CheckItem extends Model
 
     public function getIsFinishedAttribute() {
         return $this->finished_by !== null;
+    }
+
+    public function getCanFinishAttribute() {
+        $isApproved = $this->statuses()->where('is_accepted', false)->count() === 0;
+        return $isApproved || $this->statuses()->where(['user_id' => $this->sadzaglishvilisID, 'is_accepted' => true]);
     }
 }

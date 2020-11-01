@@ -32,6 +32,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/active-checks', 'Api\CheckController@index');
     Route::get('/archive-checks', 'Api\CheckController@indexArchive');
     Route::get('/checks/export', 'Api\CheckController@exportChecks');
+    Route::delete('/checks/{check}', 'Api\CheckController@destroy');
     Route::get('/checks/{check}/export', 'Api\CheckController@exportCheck');
     Route::get('/checks/{check}/toggle-status', 'Api\CheckController@toggleStatus');
     Route::get('/checks/{check}/move-to-archive', 'Api\CheckController@moveToArchive');
@@ -42,7 +43,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/checks/{check}/items/{item}/approve/{manager}', 'Api\CheckController@approveItem');
     Route::post('/checks/{check}/items/{item}/reject/{manager}', 'Api\CheckController@rejectItem');
     Route::post('/checks/{check}/items', 'Api\CheckController@storeItem');
-    Route::patch('/checks/{check}/items/{item}', 'Api\CheckController@updateItem');
+    Route::post('/checks/{check}/items/{item}', 'Api\CheckController@updateItem');
     Route::delete('/checks/{check}/items/{item}', 'Api\CheckController@deleteItem');
     Route::get('/checks/{check}/managers', 'Api\CheckController@managers');
     Route::post('/checks', 'Api\CheckController@store');
