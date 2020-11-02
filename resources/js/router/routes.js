@@ -14,6 +14,7 @@ export default [
 
   { path: '/home', name: 'home', component: page('home.vue') },
   { path: '/users', name: 'users', component: page('users/index.vue') },
+  { path: '/organizations', name: 'organizations', component: page('organizations/index.vue') },
   { path: '/checks', name: 'checks', component: page('checks/index.vue') },
   { path: '/check-archive', name: 'check-archive', component: page('checks/archive.vue') },
   { path: '/settings',

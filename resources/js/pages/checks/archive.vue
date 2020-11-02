@@ -57,7 +57,8 @@
                         :class="[ 'mr-3', { 'text-success': check.is_visible }, { 'text-danger': !check.is_visible } ]" :title="check.is_visible ? 'დეაქტივაცია' : 'აქტივაცია'"
                 />
                 <b-icon icon="pencil-square" class="mr-3 text-info" />
-                <b-icon icon="archive" class="text-warning" @click="copyFromArchive(check)" />
+                <b-icon icon="archive" class="mr-3 text-warning" @click="copyFromArchive(check)" />
+                <b-icon v-if="canDelete(check)" icon="trash" class="text-danger" @click="deleteCheck(check)" />
               </div>
             </b-card-header>
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
@@ -240,7 +241,8 @@ export default {
   computed: {
     ...mapGetters({
       checks: 'check/archiveChecks',
-      operators: 'user/users'
+      operators: 'user/users',
+      isAdmin: 'auth/isAdmin'
     })
   },
 
@@ -257,6 +259,16 @@ export default {
   },
 
   methods: {
+    canDelete (check) {
+      return this.isAdmin === true
+    },
+
+    deleteCheck (check) {
+      axios.delete('/api/checks/' + check.id)
+        .then(response => {
+          this.loadChecks()
+        })
+    },
     downloadChecks () {
       saveAs('/api/checks/export')
     },

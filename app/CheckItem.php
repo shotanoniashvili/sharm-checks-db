@@ -22,7 +22,7 @@ class CheckItem extends Model
         'comment'
     ];
 
-    protected $appends = ['is_finished', 'can_finish'];
+    protected $appends = ['is_finished', 'can_finish', 'is_approved'];
 
     public function statuses() {
         return $this->hasMany(CheckItemStatus::class);
@@ -36,8 +36,11 @@ class CheckItem extends Model
         return $this->finished_by !== null;
     }
 
+    public function getIsApprovedAttribute() {
+        return $this->statuses()->where('is_accepted', false)->count() === 0 || $this->statuses()->where(['user_id' => $this->sadzaglishvilisID, 'is_accepted' => true])->count() > 0;
+    }
+
     public function getCanFinishAttribute() {
-        $isApproved = $this->statuses()->where('is_accepted', false)->count() === 0;
-        return $isApproved || $this->statuses()->where(['user_id' => $this->sadzaglishvilisID, 'is_accepted' => true]);
+        return $this->is_approved;
     }
 }

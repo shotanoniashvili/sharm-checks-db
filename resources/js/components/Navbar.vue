@@ -14,6 +14,9 @@
       <router-link v-if="isAdmin" class="nav-link mx-2 text-dark" to="/users" role="button">
         მომხმარებლები
       </router-link>
+      <router-link v-if="isAdmin" class="nav-link mx-2 text-dark" to="/organizations" role="button">
+        ორგანიზაციები
+      </router-link>
 
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false">
         <span class="navbar-toggler-icon" />
