@@ -50,30 +50,44 @@
         <div class="accordion" role="tablist">
           <b-card no-body class="mb-1">
             <b-card-header header-tag="header" class="p-3 cursor-pointer" role="tab" @click="toggleAccordion(check)">
-              {{ check.name }} - {{ moment(check.created_at).format('YYYY-MM-DD HH:mm:ss') }} - {{ check.user.name }}
+              <div class="float-left">
+                {{ check.name }} - {{ moment(check.created_at).format('YYYY-MM-DD HH:mm:ss') }} - {{ check.user.name }}
+                <span
+                  v-for="item of check.items"
+                  :key="item.id"
+                  class="position-relative"
+                >
+                  <b-icon
+                    icon="circle-fill"
+                    :class="[ 'ml-3', { 'text-success': item.is_approved }, { 'text-warning': !item.is_approved } ]"
+                  />
+                  <span v-if="!item.is_approved" class="badge badge-item-status">{{ item.statuses.length }}</span>
+                </span>
+                <b-icon icon="cash-stack" :class="['ml-3', { 'text-success': check.is_paid }, { 'text-danger': !check.is_paid }]" />
+                <b-icon icon="check2-all" :class="['ml-3', { 'text-success': check.is_finished }, { 'text-danger': !check.is_finished }]" />
+              </div>
 
               <div class="check-actions float-right">
                 <b-icon icon="circle-fill"
                         :class="[ 'mr-3', { 'text-success': check.is_visible }, { 'text-danger': !check.is_visible } ]" :title="check.is_visible ? 'დეაქტივაცია' : 'აქტივაცია'"
+                        @click="toggleCheckActivation(check)"
                 />
-                <b-icon icon="pencil-square" class="mr-3 text-info" />
+                <b-icon icon="pencil-square" class="mr-3 text-info" @click="editCheck(check)" />
                 <b-icon icon="archive" class="mr-3 text-warning" @click="copyFromArchive(check)" />
                 <b-icon v-if="canDelete(check)" icon="trash" class="text-danger" @click="deleteCheck(check)" />
               </div>
             </b-card-header>
             <b-collapse :id="'accordion-' + i" :visible="visibleAccordions.indexOf(check.id) !== -1" accordion="my-accordion" role="tabpanel" @show="onCheckShow(check)">
               <b-card-body>
-                <table class="cheki" style="width: 100%" tableexport-key="tableexport-3">
-                  <caption class="btn-toolbar tableexport-caption" style="caption-side: bottom;">
-                    <button type="button" tableexport-id="5289c334-xlsx" class="btn btn-default xlsx">
-                      Export to xlsx
-                    </button>
-                  </caption>
+                <table class="cheki" style="width: 100%">
+                  <b-button variant="success" class="mb-2" @click="downloadCheck(check)">
+                    ექსპორტი
+                  </b-button>
                   <tbody>
                     <tr class="head">
-                      <td rowspan="2">
-                        #
-                      </td>
+                      <!--                      <td rowspan="2">-->
+                      <!--                        #-->
+                      <!--                      </td>-->
                       <td style="text-align: center;     height: 100px;">
                         ოპერაციის ანგარიშის
                       </td>
@@ -104,12 +118,12 @@
                         </div>
                       </td>
                       <td v-for="manager of check.user.managers" rowspan="2" class="rotate">
-                        <div class="rotate">
+                        <div>
                           {{ manager.name }}
                         </div>
                       </td>
                       <td rowspan="2">
-&nbsp;
+                      &nbsp;
                       </td>
                     </tr>
                     <tr class="head">
@@ -130,9 +144,9 @@
                       </td>
                     </tr>
                     <tr v-for="(item, j) of check.items" :key="j">
-                      <td>{{ j }}</td>
+                      <!--                      <td>{{ j }}</td>-->
                       <td>{{ item.op_name }}</td>
-                      <td>{{ item.op_number }}</td>
+                      <td><a v-if="item.file" :href="item.file"><b-icon icon="download" /></a></td>
                       <td>{{ item.gel }}</td>
                       <td>{{ item.eur }}</td>
                       <td>{{ item.rur }}</td>
@@ -142,42 +156,17 @@
                       <td>{{ item.brand }}</td>
                       <td>{{ item.doc_type }}</td>
                       <td>{{ item.comment }}</td>
-                      <td>
-                        <!--                        <b-icon v-if="canEdit(check, item)" class="cursor-pointer" icon="pencil" @click="editCheckItem(check, item)" />-->
-                        <!--                        <b-icon v-if="canFinish(check, item)" class="cursor-pointer" icon="pencil" @click="finishCheckItem(check, item)" />-->
-                      </td>
+                      <td />
                       <td v-for="manager of check.user.managers">
-                        <!--                        <b-icon :class="getApproveModalIcon(item, manager).class + ' cursor-pointer'" :icon="getApproveModalIcon(item, manager).icon" @click="openApproveModal(check, item, manager)" />-->
+                        <b-icon :class="getApproveModalIcon(item, manager).class + ' cursor-pointer'" :icon="getApproveModalIcon(item, manager).icon" @click="openApproveModal(check, item, manager)" />
+                        <span v-if="getItemComment(item, manager) && getItemComment(item, manager).comment !== null">
+                          <b-badge pill variant="info" class="position-absolute">
+                            {{ getItemComment(item, manager).comment.length }}
+                          </b-badge>
+                        </span>
                       </td>
                       <td>
-                        <!--                        <b-icon icon="trash" class="cursor-pointer text-danger" @click="removeCheckItem(check, item)" />-->
-                      </td>
-                    </tr>
-                    <tr class="edit_tr_130">
-                      <td>&nbsp;</td>
-                      <td><input v-model="newItem.op_name" class="form-control"></td>
-                      <td><input v-model="newItem.op_number" class="form-control"></td>
-                      <td><input v-model="newItem.gel" class="form-control"></td>
-                      <td><input v-model="newItem.eur" class="form-control"></td>
-                      <td><input v-model="newItem.rur" class="form-control"></td>
-                      <td><input v-model="newItem.usd" class="form-control"></td>
-                      <td><input v-model="newItem.source" class="form-control"></td>
-                      <td><input v-model="newItem.destination" class="form-control"></td>
-                      <td><input v-model="newItem.brand" class="form-control"></td>
-                      <td><input v-model="newItem.doc_type" class="form-control"></td>
-                      <td><input v-model="newItem.comment" class="form-control"></td>
-                      <td colspan="4">
-                        <!--<b-button v-if="!newItem.id" @click="addCheckItem(check)">
-                          <b-icon icon="file-earmark-plus" />
-                        </b-button>
-                        <div v-else>
-                          <b-button @click="addCheckItem(check)">
-                            <b-icon icon="pencil" />
-                          </b-button>
-                          <b-button @click="newItem = getEmptyNewItem()">
-                            <b-icon icon="x-circle" />
-                          </b-button>
-                        </div>-->
+                        <b-icon v-if="canEdit(check, item)" icon="trash" class="cursor-pointer text-danger" @click="removeCheckItem(check, item)" />
                       </td>
                     </tr>
                   </tbody>
@@ -242,7 +231,8 @@ export default {
     ...mapGetters({
       checks: 'check/archiveChecks',
       operators: 'user/users',
-      isAdmin: 'auth/isAdmin'
+      isAdmin: 'auth/isAdmin',
+      user: 'auth/user'
     })
   },
 
@@ -259,6 +249,44 @@ export default {
   },
 
   methods: {
+    canEdit (check, item) {
+      if (this.isAdmin) return true
+
+      return false
+    },
+
+    removeCheckItem (check, item) {
+      axios.delete('/api/checks/' + check.id + '/items/' + item.id)
+        .then(response => {
+          this.loadCheckItems(check)
+        })
+    },
+
+    openApproveModal (check, item, manager) {
+      this.checkToApprove = check
+      this.itemToApprove = item
+      this.managerToApprove = manager
+
+      this.$bvModal.show('item-approve-modal')
+    },
+
+    downloadCheck (check) {
+      saveAs('/api/checks/' + check.id + '/export')
+    },
+
+    getItemComment (item, manager) {
+      if (item.statuses.filter(o => o.user_id == manager.id).length === 0) return null
+
+      return item.statuses.filter(o => o.user_id == manager.id)[0]
+    },
+
+    toggleCheckActivation (check) {
+      axios.get('/api/checks/' + check.id + '/toggle-status')
+        .then(() => {
+          check.is_visible = !check.is_visible
+        })
+    },
+
     canDelete (check) {
       return this.isAdmin === true
     },
@@ -270,7 +298,12 @@ export default {
         })
     },
     downloadChecks () {
-      saveAs('/api/checks/export')
+      let operatorsParam = ''
+      for (let operator of this.searchParams.operators) {
+        operatorsParam += '&operators[]=' + operator.id
+      }
+
+      saveAs('/api/checks/export?date-from=' + this.searchParams.dateFrom + '&date-to=' + this.searchParams.dateTo + '&operators=' + operatorsParam)
     },
 
     getApproveModalIcon (item, manager) {

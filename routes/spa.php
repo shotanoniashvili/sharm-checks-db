@@ -1,5 +1,8 @@
 <?php
 
+use App\Check;
+use App\CheckItem;
+use App\CheckItemStatus;
 use Illuminate\Support\Facades\Route;
 
 /*

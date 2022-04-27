@@ -24,6 +24,10 @@ class CheckItem extends Model
 
     protected $appends = ['is_finished', 'can_finish', 'is_approved'];
 
+    public function check() {
+        return $this->belongsTo(Check::class, 'check_id');
+    }
+
     public function statuses() {
         return $this->hasMany(CheckItemStatus::class);
     }
@@ -37,7 +41,9 @@ class CheckItem extends Model
     }
 
     public function getIsApprovedAttribute() {
-        return $this->statuses()->where('is_accepted', false)->count() === 0 || $this->statuses()->where(['user_id' => $this->sadzaglishvilisID, 'is_accepted' => true])->count() > 0;
+        return ($this->statuses()->where('is_accepted', false)->count() === $this->check->user->managers->count() &&
+            $this->statuses()->where('is_accepted', false)->count() === 0) ||
+            $this->statuses()->where(['user_id' => $this->sadzaglishvilisID, 'is_accepted' => true])->count() > 0;
     }
 
     public function getCanFinishAttribute() {

@@ -22,7 +22,7 @@
         <b-button @click="edit(data.item)">
           <b-icon icon="pencil-square" aria-hidden="true" />
         </b-button>
-        <b-button @click="delete(data.item)">
+        <b-button @click="deleteItem(data.item)">
           <b-icon icon="trash" aria-hidden="true" />
         </b-button>
       </template>
@@ -50,7 +50,10 @@ export default {
       fields: [
         {
           key: 'name',
-          label: 'სახელი'
+          label: 'სახელი',
+          thStyle: {
+            width: '90%'
+          }
         },
         {
           key: 'actions',
@@ -66,10 +69,12 @@ export default {
 
   methods: {
     organizationCreated () {
+      this.$bvModal.hide('organization-modal')
       this.loadData()
     },
 
     organizationUpdated () {
+      this.$bvModal.hide('organization-modal')
       this.loadData()
     },
 
@@ -78,7 +83,7 @@ export default {
       this.$bvModal.show('organization-modal')
     },
 
-    delete (organization) {
+    deleteItem (organization) {
       axios.delete('/api/organizations/' + organization.id)
         .then(() => {
           this.loadData()

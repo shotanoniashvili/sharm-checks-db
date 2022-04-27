@@ -18,14 +18,15 @@
               <div class="float-left">
                 {{ check.name }} - {{ moment(check.created_at).format('YYYY-MM-DD HH:mm:ss') }} - {{ check.user.name }}
                 <span
-                  class="position-relative"
                   v-for="item of check.items"
-                  :key="item.id">
+                  :key="item.id"
+                  class="position-relative"
+                >
                   <b-icon
                     icon="circle-fill"
                     :class="[ 'ml-3', { 'text-success': item.is_approved }, { 'text-warning': !item.is_approved } ]"
                   />
-                  <span class="badge badge-item-status" v-if="!item.is_approved">{{ item.statuses.length }}</span>
+                  <span v-if="!item.is_approved" class="badge badge-item-status">{{ item.statuses.length }}</span>
                 </span>
                 <b-icon icon="cash-stack" :class="['ml-3', { 'text-success': check.is_paid }, { 'text-danger': !check.is_paid }]" />
                 <b-icon icon="check2-all" :class="['ml-3', { 'text-success': check.is_finished }, { 'text-danger': !check.is_finished }]" />
@@ -268,7 +269,7 @@ export default {
     canFinish (check, item) {
       const acceptedByFounder = item.statuses.filter(o => o.user_id === 3)
 
-      if (this.isAdmin || (acceptedByFounder.length > 0 && acceptedByFounder.is_accepted)) return true
+      if (this.isAdmin || (acceptedByFounder.length > 0 && acceptedByFounder[0].is_accepted)) return true
 
       return check.user.managers.length === item.statuses.length
     },

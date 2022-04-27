@@ -23,7 +23,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/users/{user}', 'Api\UserController@update');
     Route::delete('/users/{user}', 'Api\UserController@destroy');
 
-    Route::get('/organizations', 'Api\OrganizationController@index');
+    Route::resource('/organizations', 'Api\OrganizationController');
     Route::get('/roles', 'Api\RoleController@index');
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');

@@ -226,7 +226,8 @@ class CheckController extends Controller
         $item->finished_by = $request->user()->id;
         $item->save();
 
-        if($check->user->managers->count() === CheckItemStatus::whereIn('check_item_id', $check->items->pluck('id')->toArray())->count())
+        if($check->user->managers->count() === CheckItemStatus::whereIn('check_item_id', $check->items->pluck('id')->toArray())->count() ||
+            $check->items()->whereNull('finished_by')->count() === 0)
             $check->update(['status' => 'completed']);
 
         return new MessageResource('', true);
@@ -237,9 +238,25 @@ class CheckController extends Controller
     }
 
     public function exportChecks(Request $request) {
-        $checks = Check::where('is_archive', true)->get();
+        $user = $request->user();
 
-        return Excel::download(new ChecksExport($checks), 'checks-export.xlsx');
+        $query = Check::where('is_archive', true)->with(['user' => function($user) {
+            $user->with('managers');
+        }])->with(['items' => function($items) {
+            $items->with(['statuses', 'finishedBy']);
+        }])->where('is_archive', true);
+
+        $query->whereHas('user', function($q) use ($user) {
+            $q->whereHas('organizations', function($q2) use ($user) {
+                $q2->whereIn('id', $user->organizations->pluck('id')->toArray());
+            });
+        });
+
+        if($request->input('date-from')) $query->where('created_at', '>=', $request->input('date-from'));
+        if($request->input('date-to')) $query->where('created_at', '<=', $request->input('date-to'));
+        if($request->input('operators')) $query->whereIn('user_id', $request->input('operators'));
+
+        return Excel::download(new ChecksExport($query->get()), 'checks-export.xlsx');
     }
 
     public function destroy(Check $check) {
